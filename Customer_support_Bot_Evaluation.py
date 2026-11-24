@@ -29,8 +29,18 @@
 
 #Sample Langsmith run - https://apac.smith.langchain.com/o/fec4ecf1-ac78-4588-a21c-b1186edcf52e/datasets/224f7c7c-2f4e-4151-af3c-d84760536fb6/compare?selectedSessions=74356a32-a612-45d3-bf99-50f2394a0484
 
+"""
+Flow of the code:
+------------------
+
+Zerodha homepage → text chunks → Hugging Face embeddings → FAISS index
+                                                        ↓
+Question → retrieve relevant chunks → OpenRouter model → answer + source documents
+
+"""
+
+
 import os
-import getpass
 import bs4
 from typing_extensions import Annotated, TypedDict
 from langsmith import Client, traceable
@@ -59,7 +69,7 @@ if missing_credentials:
 
 os.environ["LANGSMITH_TRACING"] = "true"
 
-print("\n##API Keys loaded correctly.\n")
+print("\n##API Keys loaded.\n")
 
 print("\n##Loading knowledge base from Zerodha...")
 loader = WebBaseLoader("https://zerodha.com/")
@@ -72,16 +82,17 @@ text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=200
 )
+
 splits = text_splitter.split_documents(docs)
 
-print("Created {len(splits)} chunks.")
+print(f"Created {len(splits)} chunks.")
 
 embeddings = HuggingFaceEmbeddings() #OpenAIEmbeddings()
 vectorstore = FAISS.from_documents(splits, embeddings)
 retriever = vectorstore.as_retriever()
 
-
 #llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+#temperature controls how varied the model’s responses are.
 llm = ChatOpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.environ["OPENROUTER_API_KEY"],
