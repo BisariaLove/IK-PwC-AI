@@ -72,7 +72,7 @@ search = TavilySearchResults()
 print(search.description)
 print(search.name)
 
-tools = [retriever_tool, search]
+fortools = [retriever_tool, search]
 
 # Get the prompt to use - you can modify this!
 prompt = ChatPromptTemplate.from_messages([
